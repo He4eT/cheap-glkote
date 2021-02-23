@@ -1,3 +1,7 @@
+/**
+ * @see: https://github.com/curiousdannii/glkote-term/blob/master/src/glkote-dumb.js
+ */
+
 const readline = require('readline')
 const MuteStream = require('mute-stream')
 const ansiEscapes = require('ansi-escapes')
@@ -26,7 +30,7 @@ const onInit = () => {
 }
 
 const onUpdateContent = messages =>
-  messages.text.forEach(({append, content}) => {
+  messages.text.forEach(({ append, content }) => {
     if (!append) {
       stdout.write('\n')
     }
@@ -72,7 +76,7 @@ const onFileNameRequest = (tosave, usage, callback) => {
   rl.question(
     'Please enter a file name (without an extension): ',
     filename => callback(filename
-      ? {filename, usage}
+      ? { filename, usage }
       : null))
 }
 

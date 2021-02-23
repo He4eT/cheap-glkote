@@ -1,3 +1,8 @@
+/**
+ * @see: https://github.com/curiousdannii/glkote-term/blob/master/src/glkote-dumb.js
+ * @see: https://github.com/curiousdannii/glkote-term/blob/master/src/electrofs.js
+ */
+
 class FakeDialog {
   constructor(handlers) {
     this.streaming = false

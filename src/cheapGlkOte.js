@@ -1,3 +1,7 @@
+/**
+ * @see: https://github.com/curiousdannii/glkote-term/blob/master/src/glkote-dumb.js
+ */
+
 const GlkOte = require('./glkOte/glkote-term')
 
 class CheapGlkOte extends GlkOte {
@@ -33,7 +37,7 @@ class CheapGlkOte extends GlkOte {
   update_inputs(data) {
     if (!data.length) return null
 
-    const {type} = data[0]
+    const { type } = data[0]
     if (['char', 'line'].includes(type)) {
       this.current_input_type = type
       this.handlers.onUpdateInputs(type)
@@ -58,9 +62,9 @@ class CheapGlkOte extends GlkOte {
   }
 
   update_content(messages) {
-    const filtered =
-      messages.filter(content =>
-        content.id === this.window.id)[0]
+    const filtered = messages.filter(
+      content => content.id === this.window.id
+    )[0]
 
     this.handlers.onUpdateContent(filtered)
   }

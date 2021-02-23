@@ -1,15 +1,8 @@
 #!/usr/bin/env node
 
-/*
-
-Emglken runner
-==============
-
-Copyright (c) 2020 Dannii Willis
-MIT licenced
-https://github.com/curiousdannii/emglken
-
-*/
+/**
+ * @see: https://github.com/curiousdannii/emglken/blob/master/bin/emglken.js
+ */
 
 const fs = require('fs')
 const minimist = require('minimist')

@@ -11,7 +11,7 @@ const noopHandlers = [
   'onFileNameRequest',
   'onExit',
   'setSend'
-].reduce((acc, x) => (acc[x] = noop, acc), {})
+].reduce((acc, x) => ((acc[x] = noop), acc), {})
 
 module.exports = handlers_ => {
   const handlers =

@@ -1,3 +1,7 @@
+/**
+ * @see: https://github.com/curiousdannii/glkote-term/blob/master/src/glkote-term.js
+ */
+
 class GlkOte {
   constructor() {
     this.current_metrics = null
