@@ -1,0 +1,24 @@
+{
+  "name": "cheap-glkote",
+  "version": "0.1.0",
+  "description": "Abstract JavaScript implementation of GlkOte",
+  "author": "He4eT <He4eTHb1u@gmail.com>",
+  "license": "MIT",
+  "keywords": [
+    "glk",
+    "glkote",
+    "interactive fiction",
+    "interactive-fiction"
+  ],
+  "main": "src/index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "ansi-escapes": "^4.0.0",
+    "emglken": "^0.3.3",
+    "minimist": "^1.2.5",
+    "mute-stream": "0.0.8"
+  },
+  "scripts": {
+    "test": "./tests/runtests.sh"
+  }
+}
