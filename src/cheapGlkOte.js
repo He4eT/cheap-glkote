@@ -5,7 +5,7 @@
 const GlkOte = require('./glkOte/glkote-term')
 
 class CheapGlkOte extends GlkOte {
-  constructor(handlers) {
+  constructor(handlers, loggers) {
     super()
 
     this.window = null
@@ -94,16 +94,16 @@ class CheapGlkOte extends GlkOte {
     })
   }
 
-  log(msg) {
-    console.log(`[log]: ${msg}`)
+  log(message) {
+    loggers.log(message)
   }
 
-  warning(msg) {
-    console.warn(`[warning]: ${msg}`)
+  warning(message) {
+    loggers.warn(message)
   }
 
   error(message) {
-    console.error(`[error]: ${message}`)
+    loggers.error(message)
   }
 }
 

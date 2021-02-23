@@ -4,7 +4,7 @@
  */
 
 class FakeDialog {
-  constructor(handlers) {
+  constructor(handlers, loggers) {
     this.streaming = false
     this.handlers = handlers
   }
@@ -32,7 +32,15 @@ class FakeDialog {
   }
 
   log(message) {
-    console.log(message)
+    loggers.log(message)
+  }
+
+  warning(message) {
+    loggers.warn(message)
+  }
+
+  error(message) {
+    loggers.error(message)
   }
 }
 

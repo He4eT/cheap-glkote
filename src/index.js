@@ -15,12 +15,18 @@ const noopHandlers = [
   'setSend'
 ].reduce((acc, x) => ((acc[x] = noop), acc), {})
 
-module.exports = handlers_ => {
+const defaultLoggers = {
+  log: console.log,
+  warning: console.warn,
+  error: console.error
+}
+
+module.exports = (handlers_, loggers = defaultLoggers) => {
   const handlers =
     Object.assign({}, noopHandlers, handlers_)
 
-  const Dialog = new FakeDialog(handlers)
-  const GlkOte = new CheapGlkOte(handlers)
+  const Dialog = new FakeDialog(handlers, loggers)
+  const GlkOte = new CheapGlkOte(handlers, loggers)
 
   const sendFn = GlkOte.sendFn.bind(GlkOte)
 
