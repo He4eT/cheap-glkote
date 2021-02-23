@@ -17,7 +17,7 @@ const { glkInterface, sendFn } = CheapGlkOte(handlers [, loggers])
 ```js
 sendFn('open door')
 ```
-You should respect input type setted by `onUpdateInputs`
+You should respect input type setted by `onUpdateInputs`.
 
 ### Output and lifecycle
 ```js
