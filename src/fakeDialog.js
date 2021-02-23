@@ -7,30 +7,28 @@ class FakeDialog {
   constructor(handlers) {
     this.streaming = false
     this.handlers = handlers
-    this.path = 'fake/path'
   }
 
   file_ref_exists = ref => false
 
   file_construct_ref(filename, usage, gameid) {
     return {
-      filename: [this.path, filename].join('/'),
+      filename,
       usage: usage || ''
     }
   }
 
   file_read(dirent, israw) {
-    console.log('fake_file_read', dirent, israw)
-    return 'content'
+    return this.handlers.onFileRead(dirent, israw)
   }
 
   file_write(dirent, content, israw) {
     if (content.length === 0) return (void null)
-    console.log('fake_file_write', dirent, israw, content.length)
+    this.handlers.onFileWrite(dirent, content, israw)
   }
 
   open(tosave, usage, gameid, callback) {
-    this.handlers.onFileNameRequest(tosave, usage, callback)
+    this.handlers.onFileNameRequest(tosave, usage, gameid, callback)
   }
 
   log(message) {

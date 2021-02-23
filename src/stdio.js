@@ -71,14 +71,20 @@ const onDisable = disable =>
     ? detach_handlers()
     : attach_handlers()
 
-const onFileNameRequest = (tosave, usage, callback) => {
+const onFileNameRequest = (tosave, usage, gameid, callback) => {
   stdout.write('\n')
   rl.question(
-    'Please enter a file name (without an extension): ',
+    'Please enter a file name: ',
     filename => callback(filename
       ? { filename, usage }
       : null))
 }
+
+const onFileRead = (dirent, israw) =>
+  void console.log('onFileRead:', dirent)
+
+const onFileWrite = (dirent, content, israw) =>
+  void console.log('onFileWrite:', dirent, content.length)
 
 const handle_char_input = (str, key) => {
   const key_replacements = {
@@ -132,6 +138,8 @@ module.exports.handlers = {
   onDisable,
   onUpdateInputs,
   onFileNameRequest,
+  onFileRead,
+  onFileWrite,
   onExit,
   setSend
 }

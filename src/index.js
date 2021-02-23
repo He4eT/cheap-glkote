@@ -9,6 +9,8 @@ const noopHandlers = [
   'onDisable',
   'onUpdateInputs',
   'onFileNameRequest',
+  'onFileRead',
+  'onFileWrite',
   'onExit',
   'setSend'
 ].reduce((acc, x) => ((acc[x] = noop), acc), {})
