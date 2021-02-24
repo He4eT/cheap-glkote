@@ -11,8 +11,7 @@ const noopHandlers = [
   'onFileNameRequest',
   'onFileRead',
   'onFileWrite',
-  'onExit',
-  'setSend'
+  'onExit'
 ].reduce((acc, x) => ((acc[x] = noop), acc), {})
 
 const defaultLoggers = {
