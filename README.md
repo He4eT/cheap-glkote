@@ -6,11 +6,7 @@ Can be used in Node.js or in a web browser.
 
 ## Usage
 
-This repository includes examples of [stdio interface implementation](https://github.com/He4eT/cheap-glkote/blob/master/src/stdio.js) and [integration with Emglken](https://github.com/He4eT/cheap-glkote/blob/master/tests/player.stdio.js).<br>
-You can try this version with `npx`:
-```
-npx cheap-glkote path/to/storyfile
-```
+This repository includes examples of [stdio interface implementation](https://github.com/He4eT/cheap-glkote/blob/master/src/stdio.js) and [integration with Emglken](https://github.com/He4eT/cheap-glkote/blob/master/tests/player.stdio.js).
 
 ### Initialization
 ```js
