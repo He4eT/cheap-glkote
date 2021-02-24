@@ -11,6 +11,7 @@
     "interactive-fiction"
   ],
   "main": "src/index.js",
+  "bin": "bin/player.stdio.js",
   "repository": "https://github.com/He4eT/cheap-glkote",
   "bugs": "https://github.com/He4eT/cheap-glkote/issues",
   "dependencies": {},
@@ -21,7 +22,7 @@
     "mute-stream": "0.0.8"
   },
   "scripts": {
-    "play": "node ./tests/player.stdio.js",
+    "play": "node ./bin/player.stdio.js",
     "test": "./tests/runtests.sh"
   }
 }

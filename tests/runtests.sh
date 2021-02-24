@@ -2,4 +2,4 @@
 
 cd "$(dirname "$0")"
 
-node player.stdio.js praxix.z5 < <(sleep 1 && echo 'all')
+node ../bin/player.stdio.js praxix.z5 < <(sleep 1 && echo 'all')

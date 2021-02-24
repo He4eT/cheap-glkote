@@ -8,7 +8,7 @@ const fs = require('fs')
 const minimist = require('minimist')
 
 const CheapGlkOte = require('../src/')
-const { handlers } = require('../src/stdio')
+const { handlers } = require('./stdio')
 
 const formats = [
   {
@@ -46,8 +46,8 @@ const format = formats.find(x =>
   x.extensions.test(storyfile))
 
 if (!format) {
-  console.error('Unknown storyfile format')
-  return
+  console.error('Unknown storyfile format.')
+  process.exit(0)
 }
 
 const { glkInterface, sendFn } = CheapGlkOte(handlers)
