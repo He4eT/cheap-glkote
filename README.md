@@ -6,7 +6,11 @@ Can be used in Node.js or in a web browser.
 
 ## Usage
 
-This repository includes examples of [stdio interface implementation](https://github.com/He4eT/cheap-glkote/blob/master/src/stdio.js) and [integration with Emglken](https://github.com/He4eT/cheap-glkote/blob/master/tests/player.stdio.js).
+This repository includes examples of [stdio interface implementation](https://github.com/He4eT/cheap-glkote/blob/master/src/stdio.js) and [integration with Emglken](https://github.com/He4eT/cheap-glkote/blob/master/tests/player.stdio.js).<br>
+You can try this version with `npx`:
+```
+npx cheap-glkote path/to/storyfile
+```
 
 ### Initialization
 ```js
@@ -15,8 +19,9 @@ const { glkInterface, sendFn } = CheapGlkOte(handlers [, loggers])
 
 ### Input
 ```js
-sendFn('open door')
+sendFn('open door', windowObject)
 ```
+You can received `windowObject` in `onUpdateWindows` handler.<br>
 You should respect input type setted by `onUpdateInputs`.
 
 ### Output and lifecycle
@@ -27,20 +32,20 @@ const handlers = {
       * It's time to prepare the user interface.
       */
   },
-  onExit: () => {
+  onUpdateWindows: windows => {
     /**
-      * Game is over.
-      */
-  },
-  onUpdateContent: messages => {
-    /**
-      * Process the game output here.
+      * Game wants to change the number of windows.
       */
   },
   onUpdateInputs: type => {
     /**
       * Game wants to change input type.
       * Supported types: 'char', 'line'.
+      */
+  },
+  onUpdateContent: messages => {
+    /**
+      * Process the game output here.
       */
   },
   onDisable: () => {
@@ -65,6 +70,11 @@ const handlers = {
   onFileWrite: (filename, content) => {
     /**
       * Game wants to write the contents in the file.
+      */
+  },
+  onExit: () => {
+    /**
+      * Game is over.
       */
   }
 }
