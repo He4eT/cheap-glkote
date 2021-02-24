@@ -91,10 +91,6 @@ const defaultLoggers = {
 }
 ```
 
-## Limitations
-
-This implementation on GlkOte only allows you to create *one* window at a time, and that must be a TextBuffer.
-
 ## Inspired and powered by
 
 - [glkote-term](https://github.com/curiousdannii/glkote-term)
