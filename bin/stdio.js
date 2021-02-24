@@ -15,6 +15,8 @@ const rl = readline.createInterface({
   prompt: ''
 })
 
+let currentWindow = null
+
 let send = _ => _
 
 const setSend = fn => {
@@ -29,8 +31,24 @@ const onInit = () => {
   rl.resume()
 }
 
-const onUpdateContent = messages =>
-  messages.text.forEach(({ append, content }) => {
+const onUpdateWindows = windows => {
+  currentWindow = windows
+    .filter(x => x.type === 'buffer')
+    .slice(-1)[0]
+}
+
+const onUpdateInputs = type => {
+  type
+    ? attach_handlers(type)
+    : detach_handlers()
+}
+
+const onUpdateContent = allMessages => {
+  const messages = allMessages.filter(
+    content => content.id === currentWindow.id
+  )[0]
+
+  return messages.text.forEach(({ append, content }) => {
     if (!append) {
       stdout.write('\n')
     }
@@ -53,23 +71,18 @@ const onUpdateContent = messages =>
       })
     }
   })
-
-const onUpdateInputs = type => {
-  type
-    ? attach_handlers(type)
-    : detach_handlers()
-}
-
-const onExit = () => {
-  detach_handlers()
-  rl.close()
-  stdout.write('\n')
 }
 
 const onDisable = disable =>
   disable
     ? detach_handlers()
     : attach_handlers()
+
+const onExit = () => {
+  detach_handlers()
+  rl.close()
+  stdout.write('\n')
+}
 
 const onFileNameRequest = (tosave, usage, gameid, callback) => {
   stdout.write('\n')
@@ -104,7 +117,7 @@ const handle_char_input = (str, key) => {
     str ||
     key.name.replace(/f(\d+)/, 'func$1')
 
-  send(res)
+  send(res, currentWindow)
 }
 
 const attach_handlers = type => {
@@ -129,14 +142,15 @@ const handle_line_input = line => {
   }
   detach_handlers()
 
-  send(line)
+  send(line, currentWindow)
 }
 
 module.exports.handlers = {
   onInit,
+  onUpdateWindows,
+  onUpdateInputs,
   onUpdateContent,
   onDisable,
-  onUpdateInputs,
   onFileNameRequest,
   onFileRead,
   onFileWrite,

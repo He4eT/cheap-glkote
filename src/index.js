@@ -5,9 +5,10 @@ const noop = () => void null
 
 const noopHandlers = [
   'onInit',
+  'onUpdateWindows',
+  'onUpdateInputs',
   'onUpdateContent',
   'onDisable',
-  'onUpdateInputs',
   'onFileNameRequest',
   'onFileRead',
   'onFileWrite',

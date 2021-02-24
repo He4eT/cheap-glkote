@@ -8,28 +8,20 @@ class CheapGlkOte extends GlkOte {
   constructor(handlers, loggers) {
     super()
 
-    this.window = null
     this.current_input_type = null
 
     this.handlers = handlers
   }
 
-  sendFn(message) {
+  sendFn(message, window) {
     this.send_response(
       this.current_input_type,
-      this.window,
+      window,
       message)
     this.current_input_type = null
   }
 
   init(iface) {
-    /* Only one window can be opened */
-    const glk_window_open = iface.Glk.glk_window_open
-    iface.Glk.glk_window_open = (splitwin, ...args) =>
-      splitwin
-        ? null
-        : glk_window_open(splitwin, ...args)
-
     this.handlers.onInit()
     super.init(iface)
   }
@@ -62,11 +54,7 @@ class CheapGlkOte extends GlkOte {
   }
 
   update_content(messages) {
-    const filtered = messages.filter(
-      content => content.id === this.window.id
-    )[0]
-
-    this.handlers.onUpdateContent(filtered)
+    this.handlers.onUpdateContent(messages)
   }
 
   exit() {
@@ -86,12 +74,10 @@ class CheapGlkOte extends GlkOte {
     this.handlers.onDisable(disable)
   }
 
-  update_windows(data) {
-    data.forEach(win => {
-      if (win.type === 'buffer') {
-        this.window = win
-      }
-    })
+  update_windows(windows) {
+    if (windows.length) {
+      this.handlers.onUpdateWindows(windows)
+    }
   }
 
   log(message) {
