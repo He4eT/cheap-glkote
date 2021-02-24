@@ -6,7 +6,7 @@ Can be used in Node.js or in a web browser.
 
 ## Usage
 
-This repository includes examples of [stdio interface implementation](https://github.com/He4eT/cheap-glkote/blob/master/src/stdio.js) and [integration with Emglken](https://github.com/He4eT/cheap-glkote/blob/master/tests/player.stdio.js).
+This repository includes examples of [stdio interface implementation](https://github.com/He4eT/cheap-glkote/blob/master/bin/stdio.js) and [integration with Emglken](https://github.com/He4eT/cheap-glkote/blob/master/bin/player.stdio.js).
 
 ### Initialization
 ```js
