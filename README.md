@@ -1,4 +1,5 @@
 # cheap-glkote
+[![NPM Version](https://img.shields.io/npm/v/cheap-glkote.svg?style=flat-square)](https://www.npmjs.org/package/cheap-glkote)
 
 This is an abstract implementation of the [GlkOte](https://github.com/erkyrath/glkote) library interface designed to be used with [Emglken](https://github.com/curiousdannii/emglken).<br>
 Can be used in Node.js or in a web browser.
