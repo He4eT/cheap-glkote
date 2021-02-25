@@ -9,7 +9,11 @@ class FakeDialog {
     this.handlers = handlers
   }
 
-  file_ref_exists = ref => false
+  file_ref_exists({ usage }) {
+    return usage === 'save'
+      ? true
+      : false
+  }
 
   file_construct_ref(filename, usage, gameid) {
     return {
