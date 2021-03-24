@@ -15,6 +15,10 @@ class FakeDialog {
       : false
   }
 
+  file_remove_ref (ref) {
+    return true
+  }
+
   file_construct_ref(filename, usage, gameid) {
     return {
       filename,
