@@ -13,6 +13,8 @@ class GlkOte {
 
   measure_window() {
     return {
+      width: 80,
+      height: 25,
       buffercharheight: 1,
       buffercharwidth: 1,
       buffermarginx: 0,
@@ -23,12 +25,10 @@ class GlkOte {
       gridcharwidth: 1,
       gridmarginx: 0,
       gridmarginy: 0,
-      height: 0,
       inspacingx: 0,
       inspacingy: 0,
       outspacingx: 0,
-      outspacingy: 0,
-      width: 0,
+      outspacingy: 0
     }
   }
 
