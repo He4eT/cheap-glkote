@@ -11,6 +11,9 @@
     "interactive-fiction"
   ],
   "main": "src/index.js",
+  "files": [
+    "/src"
+  ],
   "repository": "https://github.com/He4eT/cheap-glkote",
   "bugs": "https://github.com/He4eT/cheap-glkote/issues",
   "dependencies": {},
