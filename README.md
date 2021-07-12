@@ -11,7 +11,8 @@ This repository includes examples of [stdio interface implementation](https://gi
 
 ### Initialization
 ```js
-const { glkInterface, sendFn } = CheapGlkOte(handlers [, loggers])
+const { glkInterface, sendFn } =
+  CheapGlkOte(handlers [, { loggers, size }])
 ```
 
 ### Input
@@ -85,6 +86,15 @@ const defaultLoggers = {
   log: console.log,
   warning: console.warn,
   error: console.error
+}
+```
+
+### Size
+Default sizes:
+```js
+const defaultSize = {
+  width: 80,
+  height: 25
 }
 ```
 
