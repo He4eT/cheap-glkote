@@ -5,8 +5,8 @@
 const GlkOte = require('./glkOte/glkote-term')
 
 class CheapGlkOte extends GlkOte {
-  constructor(handlers, loggers) {
-    super()
+  constructor(handlers, loggers, size) {
+    super(size)
 
     this.current_input_type = null
 

@@ -3,7 +3,7 @@ const CheapGlkOte = require('./cheapGlkOte')
 
 const noop = () => void null
 
-const noopHandlers = [
+const defaultHandlers = [
   'onInit',
   'onUpdateWindows',
   'onUpdateInputs',
@@ -21,12 +21,21 @@ const defaultLoggers = {
   error: console.error
 }
 
-module.exports = (handlers_, loggers = defaultLoggers) => {
+const defaultSize = {
+  width: 80,
+  height: 25
+}
+
+module.exports = (handlers_, {loggers: loggers_, size: size_ } = {}) => {
   const handlers =
-    Object.assign({}, noopHandlers, handlers_)
+    Object.assign({}, defaultHandlers, handlers_)
+  const loggers =
+    Object.assign({}, defaultLoggers, size_)
+  const size =
+    Object.assign({}, defaultSize, size_)
 
   const Dialog = new FakeDialog(handlers, loggers)
-  const GlkOte = new CheapGlkOte(handlers, loggers)
+  const GlkOte = new CheapGlkOte(handlers, loggers, size)
 
   const sendFn = GlkOte.sendFn.bind(GlkOte)
 

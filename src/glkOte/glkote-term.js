@@ -3,7 +3,10 @@
  */
 
 class GlkOte {
-  constructor() {
+  constructor({width, height}) {
+    this.width = width
+    this.height = height
+
     this.current_metrics = null
     this.disabled = false
     this.generation = 0
@@ -13,8 +16,8 @@ class GlkOte {
 
   measure_window() {
     return {
-      width: 80,
-      height: 25,
+      width: this.width,
+      height: this.height,
       buffercharheight: 1,
       buffercharwidth: 1,
       buffermarginx: 0,
