@@ -16,6 +16,7 @@ const rl = readline.createInterface({
 })
 
 let currentWindow = null
+let currentInputType = null
 
 let send = _ => _
 
@@ -37,13 +38,18 @@ const onUpdateWindows = windows => {
     .slice(-1)[0]
 }
 
-const onUpdateInputs = type => {
-  type
-    ? attach_handlers(type)
-    : detach_handlers()
+const onUpdateInputs = data => {
+  const { type } = data[0]
+
+  if (['char', 'line'].includes(type)) {
+    detach_handlers()
+    attach_handlers(type)
+  }
 }
 
 const onUpdateContent = allMessages => {
+  detach_handlers()
+
   const messages = allMessages.filter(
     content => content.id === currentWindow.id
   )[0]
@@ -73,10 +79,9 @@ const onUpdateContent = allMessages => {
   })
 }
 
-const onDisable = disable =>
-  disable
-    ? detach_handlers()
-    : attach_handlers()
+const onDisable = disable => {
+  if (disable) detach_handlers()
+}
 
 const onExit = () => {
   detach_handlers()
@@ -105,8 +110,6 @@ const handle_char_input = (str, key) => {
     '\t': 'tab',
   }
 
-  detach_handlers()
-
   // Make sure this char isn't being remembered for the next line input
   rl._line_buffer = null
   rl.line = ''
@@ -117,10 +120,12 @@ const handle_char_input = (str, key) => {
     str ||
     key.name.replace(/f(\d+)/, 'func$1')
 
-  send(res, currentWindow)
+  send(res, currentInputType, currentWindow)
+  detach_handlers()
 }
 
 const attach_handlers = type => {
+  currentInputType = type
   if (type === 'char') {
     stdout.mute()
     stdin.on('keypress', handle_char_input)
@@ -134,15 +139,15 @@ const detach_handlers = () => {
   stdin.removeListener('keypress', handle_char_input)
   rl.removeListener('line', handle_line_input)
   stdout.unmute()
+  currentInputType = null
 }
 
 const handle_line_input = line => {
   if (stdout.isTTY) {
     stdout.write(ansiEscapes.eraseLines(1))
   }
+  send(line, currentInputType, currentWindow)
   detach_handlers()
-
-  send(line, currentWindow)
 }
 
 module.exports.handlers = {
