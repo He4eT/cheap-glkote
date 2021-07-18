@@ -8,35 +8,27 @@ class CheapGlkOte extends GlkOte {
   constructor(handlers, loggers, size) {
     super(size)
 
-    this.current_input_type = null
-
     this.handlers = handlers
   }
 
-  sendFn(message, window) {
+  sendFn (message, type, window) {
     this.send_response(
-      this.current_input_type,
+      type,
       window,
       message)
-    this.current_input_type = null
   }
 
-  init(iface) {
+  init (iface) {
     this.handlers.onInit()
     super.init(iface)
   }
 
-  update_inputs(data) {
-    if (!data.length) return null
-
-    const { type } = data[0]
-    if (['char', 'line'].includes(type)) {
-      this.current_input_type = type
-      this.handlers.onUpdateInputs(type)
-    }
+  update_inputs (data) {
+    if (!data.length) return []
+    this.handlers.onUpdateInputs(data)
   }
 
-  accept_specialinput(data) {
+  accept_specialinput (data) {
     if (data.type === 'fileref_prompt') {
       const callback = ref =>
         this.send_response(
@@ -53,43 +45,37 @@ class CheapGlkOte extends GlkOte {
     }
   }
 
-  update_content(messages) {
+  update_content (messages) {
     this.handlers.onUpdateContent(messages)
   }
 
-  exit() {
+  exit () {
     this.handlers.onExit()
     super.exit()
   }
 
-  cancel_inputs(data) {
-    if (data.length === 0) {
-      this.current_input_type = null
-      this.handlers.onUpdateInputs(null)
-    }
+  cancel_inputs (data) {
+    this.handlers.onUpdateInputs(data)
   }
 
-  disable(disable) {
-    this.disabled = disable
-    this.handlers.onDisable(disable)
+  disable (data) {
+    this.handlers.onDisable(data)
   }
 
-  update_windows(windows) {
-    if (windows.length) {
-      this.handlers.onUpdateWindows(windows)
-    }
+  update_windows (windows) {
+    this.handlers.onUpdateWindows(windows)
   }
 
-  log(message) {
-    loggers.log(message)
+  log (message) {
+    this.loggers.log(message)
   }
 
-  warning(message) {
-    loggers.warn(message)
+  warning (message) {
+    this.loggers.warn(message)
   }
 
-  error(message) {
-    loggers.error(message)
+  error (message) {
+    this.loggers.error(message)
   }
 }
 
