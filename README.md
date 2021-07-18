@@ -17,17 +17,18 @@ const { glkInterface, sendFn } =
 
 ### Input
 ```js
-sendFn('open door', windowObject)
+sendFn('open door', inputType, targetWindow)
 ```
-You can received `windowObject` in `onUpdateWindows` handler.<br>
-You should respect input type setted by `onUpdateInputs`.
+You can receive `inputType` and `id` of `targetWindow` in `onUpdateInputs` handler.<br>
+You can receive `targetWindow` by its `is` in `onUpdateWindows` handler.<br>
+As I know, `inputType` can be `line` or `char`.
 
 ### Output and lifecycle
 ```js
 const handlers = {
   onInit: () => {
     /**
-      * It's time to prepare the user interface.
+      * It's time to initialize the user interface.
       */
   },
   onUpdateWindows: windows => {
@@ -35,10 +36,11 @@ const handlers = {
       * Game wants to change the number of windows.
       */
   },
-  onUpdateInputs: type => {
+  onUpdateInputs: data => {
     /**
       * Game wants to change input type.
-      * Supported types: 'char', 'line'.
+      * 'data' is a list with info about
+      * the target window and the input type.
       */
   },
   onUpdateContent: messages => {
