@@ -15,6 +15,7 @@ const rl = readline.createInterface({
   prompt: ''
 })
 
+let currentWindowId = null
 let currentWindow = null
 let currentInputType = null
 
@@ -30,16 +31,22 @@ const onInit = () => {
   }
   readline.emitKeypressEvents(stdin)
   rl.resume()
+  clearScreen()
 }
 
 const onUpdateWindows = windows => {
-  currentWindow = windows
-    .filter(x => x.type === 'buffer')
-    .slice(-1)[0]
+  currentWindow = currentWindowId
+    ? windows
+      .find(x => x.id === currentWindowId)
+    : windows
+      .filter(x => x.type === 'buffer')
+      .slice(-1)[0]
 }
 
 const onUpdateInputs = data => {
-  const { type } = data[0]
+  const { id, type } = data[0]
+
+  currentWindowId = id
 
   if (['char', 'line'].includes(type)) {
     detach_handlers()
@@ -47,14 +54,12 @@ const onUpdateInputs = data => {
   }
 }
 
-const onUpdateContent = allMessages => {
-  detach_handlers()
+const clearScreen = () => {
+  stdout.write('\u001B[2J\u001B[0;0f')
+}
 
-  const messages = allMessages.filter(
-    content => content.id === currentWindow.id
-  )[0]
-
-  return messages.text.forEach(({ append, content }) => {
+const drawBuffer = messages => {
+  messages.text.forEach(({ append, content }) => {
     if (!append) {
       stdout.write('\n')
     }
@@ -77,6 +82,29 @@ const onUpdateContent = allMessages => {
       })
     }
   })
+}
+
+const drawGrid = messages => {
+  clearScreen()
+  messages.lines
+    .map(x => x.content)
+    .map(([x]) => x)
+    .map(({text}) => text)
+    .map(x => x.trim())
+    .forEach(x => stdout.write(`${x}\n`))
+}
+
+const onUpdateContent = allMessages => {
+  detach_handlers()
+
+  const messages = allMessages.find(
+    content => content.id === currentWindow.id
+  )
+
+  ;({
+    'buffer': drawBuffer,
+    'grid': drawGrid
+  })[currentWindow.type](messages)
 }
 
 const onDisable = disable => {
