@@ -44,6 +44,7 @@ const onUpdateWindows = windows => {
 }
 
 const onUpdateInputs = data => {
+  if (data.length === 0) return null
   const { id, type } = data[0]
 
   currentWindowId = id
