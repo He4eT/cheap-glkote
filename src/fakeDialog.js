@@ -40,15 +40,15 @@ class FakeDialog {
   }
 
   log(message) {
-    loggers.log(message)
+    this.loggers.log(message)
   }
 
   warning(message) {
-    loggers.warn(message)
+    this.loggers.warn(message)
   }
 
   error(message) {
-    loggers.error(message)
+    this.loggers.error(message)
   }
 }
 
