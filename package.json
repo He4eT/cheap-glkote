@@ -23,10 +23,13 @@
   "devDependencies": {
     "ansi-escapes": "^4.0.0",
     "emglken": "^0.5.2",
+    "eslint": "^8.41.0",
     "minimist": "^1.2.5",
     "mute-stream": "0.0.8"
   },
   "scripts": {
+    "lint": "eslint bin/ src/",
+    "lint:fix": "eslint --fix bin/ src/",
     "play": "node ./bin/player.stdio.js",
     "test": "./tests/runtests.sh"
   }
