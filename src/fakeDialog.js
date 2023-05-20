@@ -7,6 +7,7 @@ class FakeDialog {
   constructor(handlers, loggers) {
     this.streaming = false
     this.handlers = handlers
+    this.loggers = loggers
   }
 
   file_ref_exists({ usage }) {
@@ -15,11 +16,11 @@ class FakeDialog {
       : false
   }
 
-  file_remove_ref (ref) {
+  file_remove_ref () {
     return true
   }
 
-  file_construct_ref(filename, usage, gameid) {
+  file_construct_ref(filename, usage) {
     return {
       filename,
       usage: usage || ''
@@ -52,4 +53,4 @@ class FakeDialog {
   }
 }
 
-module.exports = FakeDialog
+export default FakeDialog

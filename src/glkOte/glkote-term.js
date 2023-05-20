@@ -2,6 +2,8 @@
  * @see: https://github.com/curiousdannii/glkote-term/blob/master/src/glkote-term.js
  */
 
+import packageJSON from '../../package.json' assert { type: 'json' }
+
 class GlkOte {
   constructor({width, height}) {
     this.width = width
@@ -11,7 +13,7 @@ class GlkOte {
     this.disabled = false
     this.generation = 0
     this.interface = null
-    this.version = require('../../package.json').version
+    this.version = packageJSON.version
   }
 
   measure_window() {
@@ -149,4 +151,4 @@ class GlkOte {
   }
 }
 
-module.exports = GlkOte
+export default GlkOte

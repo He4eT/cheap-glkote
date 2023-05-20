@@ -1,10 +1,12 @@
+'use strict';
+
 /* GlkAPI -- a Javascript Glk API for IF interfaces
- * GlkOte Library: version 2.2.3.
+ * GlkOte Library: version 2.3.2.
  * Glk API which this implements: version 0.7.4.
  * Designed by Andrew Plotkin <erkyrath@eblong.com>
  * <http://eblong.com/zarf/glk/glkote.html>
  * 
- * This Javascript library is copyright 2010-16 by Andrew Plotkin.
+ * This Javascript library is copyright 2010-20 by Andrew Plotkin.
  * It is distributed under the MIT license; see the "LICENSE" file.
  *
  * This file is a Glk API compatibility layer for glkote.js. It offers a 
@@ -38,21 +40,16 @@
    and will also double the write-count in a stream.
 */
 
-/* Put everything inside the Glk namespace. */
+/* All state is contained in GlkClass. */
+var GlkClass = function() {
 
-Glk = function() {
+var GlkOte = null; /* imported API object */
+var VM = null; /* imported API object (the VM interface) */
+var GiDispa = null; /* imported API object (the dispatch layer) */
+var Blorb = null; /* imported API object (the resource layer) */
 
-/* The VM interface object. */
-var VM = null;
-
-/* References to external libraries */
-var Dialog;
-var GiDispa;
-var GiLoad;
-var GlkOte;
-
-/* Environment capabilities */
-var support = {};
+/* Environment capabilities. (Checked at init time.) */
+var has_canvas;
 
 /* Options from the vm_options object. */
 var option_exit_warning;
@@ -70,61 +67,7 @@ var event_generation = 0;
 var current_partial_inputs = null;
 var current_partial_outputs = null;
 
-// Set external variable references
-function set_references( vm_options )
-{
-    if ( vm_options.Dialog )
-    {
-        Dialog = vm_options.Dialog;
-    }
-    if ( !Dialog )
-    {
-        if ( typeof window !== 'undefined' && window.Dialog )
-        {
-            Dialog = window.Dialog;
-        }
-        else
-        {
-            throw new Error( 'No reference to Dialog' );
-        }
-    }
-
-    if ( vm_options.GiDispa )
-    {
-        GiDispa = vm_options.GiDispa;
-    }
-    else if ( !GiDispa && typeof window !== 'undefined' && window.GiDispa )
-    {
-        GiDispa = window.GiDispa;
-    }
-
-    if ( vm_options.GiLoad )
-    {
-        GiLoad = vm_options.GiLoad;
-    }
-    else if ( !GiLoad && typeof window !== 'undefined' && window.GiLoad )
-    {
-        GiLoad = window.GiLoad;
-    }
-
-    if ( vm_options.GlkOte )
-    {
-        GlkOte = vm_options.GlkOte;
-    }
-    if ( !GlkOte )
-    {
-        if ( typeof window !== 'undefined' && window.GlkOte )
-        {
-            GlkOte = window.GlkOte;
-        }
-        else
-        {
-            throw new Error('No reference to GlkOte');
-        }
-    }
-}
-
-/* Initialize the library, initialize the VM, and set it running. (It will
+/* Initialize the library, initialize the VM, and set it running. (It will 
    run until the first glk_select() or glk_exit() call.)
 
    The vm_options argument must have a vm_options.vm field, which must be an
@@ -139,16 +82,26 @@ function set_references( vm_options )
    library sets that up for you.)
 */
 function init(vm_options) {
-    /* Set references to external libraries */
-    set_references( vm_options );
+    /* Either GlkOte was passed in or we must create one. */
+    if (vm_options.GlkOte) {
+        GlkOte = vm_options.GlkOte;
+    }
+    else if (window.GlkOteClass) {
+        GlkOte = new window.GlkOteClass();
+    }
+
+    /* Either Blorb was passed in or we don't have one. */
+    if (vm_options.Blorb) {
+        Blorb = vm_options.Blorb;
+    }
+
+    /* Check for canvas support. We don't rely on jquery here. */
+    has_canvas = (document.createElement('canvas').getContext != undefined);
 
     VM = vm_options.vm;
-    if (GiDispa)
-        GiDispa.set_vm(VM);
-
+    GiDispa = vm_options.GiDispa; /* may be null/undefined */
+    
     vm_options.accept = accept_ui_event;
-
-    GlkOte.init(vm_options);
 
     option_exit_warning = vm_options.exit_warning;
     option_do_vm_autosave = vm_options.do_vm_autosave;
@@ -159,6 +112,16 @@ function init(vm_options) {
     if (option_before_select_hook) {
         option_before_select_hook();
     }
+
+    /* Initialize the lower levels. */
+    
+    if (GiDispa)
+        GiDispa.init({ io:vm_options.io, vm:vm_options.vm });
+    GlkOte.init(vm_options);
+}
+
+function is_inited() {
+    return (VM != null && GlkOte != null);
 }
 
 function accept_ui_event(obj) {
@@ -184,12 +147,10 @@ function accept_ui_event(obj) {
 
     switch (obj.type) {
     case 'init':
-        content_metrics = obj.metrics;
-        /* Process the support array */
-        if (obj.support) {
-            obj.support.forEach(function(item) {support[item] = 1;});
-        }
-        VM.init();
+        content_metrics = complete_metrics(obj.metrics);
+        /* We ignore the support array. This library is updated in sync
+           with GlkOte, so we know what it supports. */
+        VM.start();
         break;
 
     case 'external':
@@ -231,7 +192,7 @@ function accept_ui_event(obj) {
         break;
 
     case 'arrange':
-        content_metrics = obj.metrics;
+        content_metrics = complete_metrics(obj.metrics);
         box = {
             left: content_metrics.outspacingx,
             top: content_metrics.outspacingy,
@@ -255,6 +216,134 @@ function accept_ui_event(obj) {
     }
 }
 
+/* Given a partial metrics object, return one with all the required
+   values. Missing values will default to 0 or the standard inherited
+   terms. (E.g., if "inspacingx" is missing it will default to
+   "inspacing", then "spacing", then 0. See measure_window() in 
+   glkote.js or data_metrics_parse() in RemGlk.)
+
+   All values in the given object will be copied over; defaulting only
+   applies to missing values from the required set.
+*/
+function complete_metrics(metrics) {
+
+    // Default values if absolutely nothing is specified.
+    var res = {
+        width: 80,
+        height: 50,
+        
+        gridcharwidth: 1,
+        gridcharheight: 1,
+        buffercharwidth: 1,
+        buffercharheight: 1,
+        
+        gridmarginx: 0,
+        gridmarginy: 0,
+        buffermarginx: 0,
+        buffermarginy: 0,
+        graphicsmarginx: 0,
+        graphicsmarginy: 0,
+        
+        outspacingx: 0,
+        outspacingy: 0,
+        inspacingx: 0,
+        inspacingy: 0,
+    };
+
+    // Various ways of specifying defaults.
+    var val;
+
+    val = metrics.charwidth;
+    if (val !== undefined) {
+        res.gridcharwidth = val;
+        res.buffercharwidth = val;
+    }
+    val = metrics.charheight;
+    if (val !== undefined) {
+        res.gridcharheight = val;
+        res.buffercharheight = val;
+    }
+
+    val = metrics.margin;
+    if (val !== undefined) {
+        res.gridmarginx = val;
+        res.gridmarginy = val;
+        res.buffermarginx = val;
+        res.buffermarginy = val;
+        res.graphicsmarginx = val;
+        res.graphicsmarginy = val;
+    }    
+
+    val = metrics.gridmargin;
+    if (val !== undefined) {
+        res.gridmarginx = val;
+        res.gridmarginy = val;
+    }
+    
+    val = metrics.buffermargin;
+    if (val !== undefined) {
+        res.buffermarginx = val;
+        res.buffermarginy = val;
+    }
+    
+    val = metrics.graphicsmargin;
+    if (val !== undefined) {
+        res.graphicsmarginx = val;
+        res.graphicsmarginy = val;
+    }
+
+    val = metrics.marginx;
+    if (val !== undefined) {
+        res.gridmarginx = val;
+        res.buffermarginx = val;
+        res.graphicsmarginx = val;
+    }
+    
+    val = metrics.marginy;
+    if (val !== undefined) {
+        res.gridmarginy = val;
+        res.buffermarginy = val;
+        res.graphicsmarginy = val;
+    }
+
+    val = metrics.spacing;
+    if (val !== undefined) {
+        res.inspacingx = val;
+        res.inspacingy = val;
+        res.outspacingx = val;
+        res.outspacingy = val;
+    }
+
+    val = metrics.inspacing;
+    if (val !== undefined) {
+        res.inspacingx = val;
+        res.inspacingy = val;
+    }
+
+    val = metrics.outspacing;
+    if (val !== undefined) {
+        res.outspacingx = val;
+        res.outspacingy = val;
+    }
+
+    val = metrics.spacingx;
+    if (val !== undefined) {
+        res.inspacingx = val;
+        res.outspacingx = val;
+    }
+
+    val = metrics.spacingy;
+    if (val !== undefined) {
+        res.inspacingy = val;
+        res.outspacingy = val;
+    }
+    
+    // Copy over all the supplied fields. These override the defaults above.
+    res = Object.assign(res, metrics);
+    
+    return res;
+}
+    
 function handle_arrange_input() {
     if (!gli_selectref)
         return;
@@ -453,8 +542,8 @@ function handle_line_input(disprock, input, termkey) {
     VM.resume();
 }
 
-function update(type) {
-    var dataobj = { type: type || 'update', gen: event_generation };
+function update() {
+    var dataobj = { type: 'update', gen: event_generation };
     var winarray = null;
     var contentarray = null;
     var inputarray = null;
@@ -705,10 +794,27 @@ function update(type) {
     }
 }
 
+/* Return the library interface object that we were passed or created.
+   Call this if you want to use, e.g., the same Dialog object that GlkOte
+   is using.
+*/
+function get_library(val) {
+    switch (val) {
+        case 'VM': return VM;
+        case 'GlkOte': return GlkOte;
+        case 'GiDispa': return GiDispa;
+        case 'Blorb': return Blorb;
+        case 'Dialog': return GlkOte.getlibrary('Dialog');
+    }
+    /* Unrecognized library name. */
+    return null;
+}
+    
 /* Wrap up the current display state as a (JSONable) object. This is
    called from Quixe.vm_autosave.
 */
 function save_allstate() {
+    var Dialog = GlkOte.getlibrary('Dialog');
     var res = {};
 
     if (gli_rootwin)
@@ -886,6 +992,8 @@ function save_allstate() {
 */
 function restore_allstate(res)
 {
+    var Dialog = GlkOte.getlibrary('Dialog');
+    
     if (gli_windowlist || gli_streamlist || gli_filereflist)
         throw('restore_allstate: glkapi module has already been launched');
 
@@ -1058,7 +1166,7 @@ function restore_allstate(res)
 
         case strtype_Resource:
             str.resfilenum = obj.resfilenum;
-            var el = GiLoad.find_data_chunk(str.resfilenum);
+            var el = Blorb.get_data_chunk(str.resfilenum);
             if (el) {
                 str.buf = el.data;
             }
@@ -1143,6 +1251,11 @@ function restore_allstate(res)
 function fatal_error(msg) {
     has_exited = true;
     ui_disabled = true;
+    if (!GlkOte) {
+        // We haven't been initialized yet, so we can only try to log the error and hope someone sees it.
+        console.log('Fatal error:', msg);
+        return;
+    }
     GlkOte.error(msg);
     var dataobj = { type: 'update', gen: event_generation, disable: true };
     dataobj.input = [];
@@ -2693,8 +2806,10 @@ function UniArrayToBE32(arr) {
    up in Safari, in Opera, and in Firefox if you have Firebug installed.)
 */
 function qlog(msg) {
-    if (typeof console !== 'undefined' && console.log)
+    if (window.console && console.log)
         console.log(msg);
+    else if (window.opera && opera.postError)
+        opera.postError(msg);
 }
 
 /* RefBox: Simple class used for "call-by-reference" Glk arguments. The object
@@ -2896,13 +3011,13 @@ function gli_window_put_string(win, val) {
                gli_window_grid_canonicalize(), but I've inlined it. */
             if (win.cursorx < 0)
                 win.cursorx = 0;
-            else if (win.cursorx >= win.gridwidth) {
+            if (win.cursorx >= win.gridwidth) {
                 win.cursorx = 0;
                 win.cursory++;
             }
             if (win.cursory < 0)
                 win.cursory = 0;
-            else if (win.cursory >= win.gridheight)
+            if (win.cursory >= win.gridheight)
                 break; /* outside the window */
 
             if (ch == "\n") {
@@ -2912,7 +3027,7 @@ function gli_window_put_string(win, val) {
                 continue;
             }
 
-            lineobj = win.lines[win.cursory];
+            var lineobj = win.lines[win.cursory];
             lineobj.dirty = true;
             lineobj.chars[win.cursorx] = ch;
             lineobj.styles[win.cursorx] = win.style;
@@ -2935,13 +3050,13 @@ function gli_window_put_string(win, val) {
 function gli_window_grid_canonicalize(win) {
     if (win.cursorx < 0)
         win.cursorx = 0;
-    else if (win.cursorx >= win.gridwidth) {
+    if (win.cursorx >= win.gridwidth) {
         win.cursorx = 0;
         win.cursory++;
     }
     if (win.cursory < 0)
         win.cursory = 0;
-    else if (win.cursory >= win.gridheight)
+    if (win.cursory >= win.gridheight)
         return true; /* outside the window */
     return false;
 }
@@ -3094,7 +3209,7 @@ function gli_window_close(win, recurse) {
 
 function gli_window_rearrange(win, box) {
     var width, height, oldwidth, oldheight;
-    var min, max, diff, splitwid, ix, cx, lineobj;
+    var min, max, diff, split, splitwid, ix, cx, lineobj;
     var box1, box2, ch1, ch2;
 
     geometry_changed = true;
@@ -3380,6 +3495,8 @@ function gli_stream_dirty_file(str) {
    buffer out.
 */
 function gli_stream_flush_file(str) {
+    var Dialog = GlkOte.getlibrary('Dialog');
+    
     if (str.streaming)
         GlkOte.log('### gli_stream_flush_file called for streaming file!');
     if (!(str.timer_id === null)) {
@@ -3390,6 +3507,8 @@ function gli_stream_flush_file(str) {
 }
 
 function gli_new_fileref(filename, usage, rock, ref) {
+    var Dialog = GlkOte.getlibrary('Dialog');
+    
     var fref = {};
     fref.filename = filename;
     fref.rock = rock;
@@ -3510,7 +3629,7 @@ function gli_put_char(str, ch) {
                 var len = arr.length;
                 if (len > str.buflen-str.bufpos)
                     len = str.buflen-str.bufpos;
-                for (ix=0; ix<len; ix++)
+                for (var ix=0; ix<len; ix++)
                     str.buf[str.bufpos+ix] = arr[ix];
                 str.bufpos += len;
                 if (str.bufpos > str.bufeof)
@@ -3813,6 +3932,7 @@ function gli_get_line(str, buf, want_unicode) {
         return 0;
 
     var len = buf.length;
+    var lx, ch;
     var gotnewline;
 
     switch (str.type) {
@@ -4076,7 +4196,6 @@ function glk_exit() {
     gli_selectref = null;
     if (option_exit_warning)
         GlkOte.warning(option_exit_warning);
-    update('exit');
     return DidNotReturn;
 }
 
@@ -4133,20 +4252,22 @@ function glk_gestalt_ext(sel, val, arr) {
         return 2; // gestalt_CharOutput_ExactPrint
 
     case 4: // gestalt_MouseInput
-        if (val == Const.wintype_TextGrid)
+        if (val == Const.wintype_TextBuffer)
             return 1;
-        if (support.graphics && val == Const.wintype_Graphics)
+        if (val == Const.wintype_Graphics && has_canvas)
             return 1;
         return 0;
 
     case 5: // gestalt_Timer
-        return support.timer || 0;
+        return 1;
 
     case 6: // gestalt_Graphics
-        return support.graphics || 0;
+        return 1;
 
     case 7: // gestalt_DrawImage
-        if (support.graphics && (val == Const.wintype_TextBuffer || val == Const.wintype_Graphics))
+        if (val == Const.wintype_TextBuffer)
+            return 1;
+        if (val == Const.wintype_Graphics && has_canvas)
             return 1;
         return 0;
 
@@ -4160,10 +4281,10 @@ function glk_gestalt_ext(sel, val, arr) {
         return 0;
 
     case 11: // gestalt_Hyperlinks
-        return support.hyperlinks || 0;
+        return 1;
 
     case 12: // gestalt_HyperlinkInput
-        if (support.hyperlinks && (val == Const.wintype_TextBuffer || val == Const.wintype_TextGrid))
+        if (val == 3 || val == 4) // TextBuffer or TextGrid
             return 1;
         else
             return 0;
@@ -4172,7 +4293,7 @@ function glk_gestalt_ext(sel, val, arr) {
         return 0;
 
     case 14: // gestalt_GraphicsTransparency
-        return support.graphics || 0;
+        return 1;
 
     case 15: // gestalt_Unicode
         return 1;
@@ -4311,7 +4432,7 @@ function glk_window_open(splitwin, method, size, wintype, rock) {
         newwin.cursory = 0;
         break;
     case Const.wintype_Graphics:
-        if (!support.graphics) {
+        if (!has_canvas) {
             /* Graphics windows not supported; silently return null */
             gli_delete_window(newwin);
             return null;
@@ -4691,6 +4812,8 @@ function glk_stream_get_rock(str) {
 }
 
 function glk_stream_open_file(fref, fmode, rock) {
+    var Dialog = GlkOte.getlibrary('Dialog');
+    
     if (!fref)
         throw('glk_stream_open_file: invalid fileref');
 
@@ -4793,21 +4916,20 @@ function glk_stream_open_memory(buf, fmode, rock) {
 function glk_stream_open_resource(filenum, rock) {
     var str;
 
-    if (!GiLoad || !GiLoad.find_data_chunk)
+    if (!Blorb)
         return null;
-    var el = GiLoad.find_data_chunk(filenum);
+    var el = Blorb.get_data_chunk(filenum);
     if (!el)
         return null;
 
     var buf = el.data;
-    var isbinary = (el.type == 'BINA');
 
     str = gli_new_stream(strtype_Resource,
         true, 
         false, 
         rock);
     str.unicode = false;
-    str.isbinary = isbinary;
+    str.isbinary = el.binary;
 
     str.resfilenum = filenum;
 
@@ -4832,21 +4954,20 @@ function glk_stream_open_resource(filenum, rock) {
 function glk_stream_open_resource_uni(filenum, rock) {
     var str;
 
-    if (!GiLoad || !GiLoad.find_data_chunk)
+    if (!Blorb)
         return null;
-    var el = GiLoad.find_data_chunk(filenum);
+    var el = Blorb.get_data_chunk(filenum);
     if (!el)
         return null;
 
     var buf = el.data;
-    var isbinary = (el.type == 'BINA');
 
     str = gli_new_stream(strtype_Resource,
         true, 
         false, 
         rock);
     str.unicode = true;
-    str.isbinary = isbinary;
+    str.isbinary = el.binary;
 
     str.resfilenum = filenum;
 
@@ -4869,6 +4990,8 @@ function glk_stream_open_resource_uni(filenum, rock) {
 }
 
 function glk_stream_close(str, result) {
+    var Dialog = GlkOte.getlibrary('Dialog');
+    
     if (!str)
         throw('glk_stream_close: invalid stream');
 
@@ -4949,18 +5072,21 @@ function glk_stream_get_current() {
 }
 
 function glk_fileref_create_temp(usage, rock) {
+    var Dialog = GlkOte.getlibrary('Dialog');
     var filetype = (usage & Const.fileusage_TypeMask);
     var filetypename = FileTypeMap[filetype];
     var ref = Dialog.file_construct_temp_ref(filetypename);
-    fref = gli_new_fileref(ref.filename, usage, rock, ref);
+    var fref = gli_new_fileref(ref.filename, usage, rock, ref);
     return fref;
 }
 
 function glk_fileref_create_by_name(usage, filename, rock) {
+    var Dialog = GlkOte.getlibrary('Dialog');
+    
     /* Filenames that do not come from the user must be cleaned up. */
     filename = Dialog.file_clean_fixed_name(filename, (usage & Const.fileusage_TypeMask));
 
-    fref = gli_new_fileref(filename, usage, rock, null);
+    var fref = gli_new_fileref(filename, usage, rock, null);
     return fref;
 }
 
@@ -5010,19 +5136,19 @@ function glk_fileref_create_by_prompt(usage, fmode, rock) {
 
 function gli_fileref_create_by_prompt_callback(obj) {
     var ref = obj.value;
+    /* This "value" field will be a dialog.js fileref object if we are
+       connected to GlkOte. However, if we are connected to RegTest,
+       it will be a plain string. We attempt to handle both cases. */
+
     var usage = ui_specialcallback.usage;
     var rock = ui_specialcallback.rock;
 
     var fref = null;
-    if (ref) {
+    if (ref && typeof(ref) == 'object') {
         fref = gli_new_fileref(ref.filename, usage, rock, ref);
     }
-
-    // If reading a file which doesn't exist, return null
-    if ( ui_specialinput.filemode === 'read' && !Dialog.file_ref_exists( fref.ref ) )
-    {
-        glk_fileref_destroy( fref );
-        fref = null;
+    else if (ref && typeof(ref) == 'string') {
+        fref = gli_new_fileref(ref, usage, rock, null);
     }
 
     ui_specialinput = null;
@@ -5063,12 +5189,14 @@ function glk_fileref_get_rock(fref) {
 }
 
 function glk_fileref_delete_file(fref) {
+    var Dialog = GlkOte.getlibrary('Dialog');
     if (!fref)
         throw('glk_fileref_delete_file: invalid fileref');
     Dialog.file_remove_ref(fref.ref);
 }
 
 function glk_fileref_does_file_exist(fref) {
+    var Dialog = GlkOte.getlibrary('Dialog');
     if (!fref)
         throw('glk_fileref_does_file_exist: invalid fileref');
     if (Dialog.file_ref_exists(fref.ref))
@@ -5369,10 +5497,10 @@ function glk_request_timer_events(msec) {
 /* Graphics functions. */
 
 function glk_image_get_info(imgid, widthref, heightref) {
-    if (!GiLoad || !GiLoad.get_image_info)
+    if (!Blorb || !Blorb.get_image_info)
         return null;
 
-    var info = GiLoad.get_image_info(imgid);
+    var info = Blorb.get_image_info(imgid);
     if (info) {
         if (widthref)
             widthref.set_value(info.width);
@@ -5391,9 +5519,9 @@ function glk_image_draw(win, imgid, val1, val2) {
     if (!win)
         throw('glk_image_draw: invalid window');
 
-    if (!GiLoad || !GiLoad.get_image_info)
+    if (!Blorb || !Blorb.get_image_info)
         return 0;
-    var info = GiLoad.get_image_info(imgid);
+    var info = Blorb.get_image_info(imgid);
     if (!info)
         return 0;
 
@@ -5441,9 +5569,9 @@ function glk_image_draw_scaled(win, imgid, val1, val2, width, height) {
     if (!win)
         throw('glk_image_draw_scaled: invalid window');
 
-    if (!GiLoad || !GiLoad.get_image_info)
+    if (!Blorb || !Blorb.get_image_info)
         return 0;
-    var info = GiLoad.get_image_info(imgid);
+    var info = Blorb.get_image_info(imgid);
     if (!info)
         return 0;
 
@@ -5954,6 +6082,8 @@ function glk_get_line_stream_uni(str, buf) {
 }
 
 function glk_stream_open_file_uni(fref, fmode, rock) {
+    var Dialog = GlkOte.getlibrary('Dialog');
+    
     if (!fref)
         throw('glk_stream_open_file_uni: invalid fileref');
 
@@ -6241,11 +6371,13 @@ function glk_date_to_simple_time_local(dateref, factor) {
 
 /* End of Glk namespace function. Return the object which will
    become the Glk global. */
-var api = {
-    version: '2.2.3', /* GlkOte/GlkApi version */
-    set_references: set_references,
+return {
+    classname: 'Glk',
+    version: '2.3.2', /* GlkOte/GlkApi version */
     init : init,
+    inited : is_inited,
     update : update,
+    getlibrary : get_library,
     save_allstate : save_allstate,
     restore_allstate : restore_allstate,
     fatal_error : fatal_error,
@@ -6385,12 +6517,12 @@ var api = {
     glk_stream_open_resource_uni : glk_stream_open_resource_uni
 };
 
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = api;
-}
+};
 
-return api;
+/* Glk is an instance of GlkClass, ready to init. */
+var Glk = new GlkClass();
 
-}();
+// Node-compatible behavior
+try { exports.Glk = Glk; exports.GlkClass = GlkClass; } catch (ex) {};
 
 /* End of Glk library. */

@@ -4,11 +4,12 @@
  * @see: https://github.com/curiousdannii/emglken/blob/master/bin/emglken.js
  */
 
-const fs = require('fs')
-const minimist = require('minimist')
+import { readFileSync } from 'fs'
+import minimist from 'minimist'
 
-const CheapGlkOte = require('../src/')
-const { handlers } = require('./stdio')
+import CheapGlkOte from '../src/index.js'
+
+import { handlers } from './stdio.js'
 
 const formats = [
   {
@@ -50,13 +51,19 @@ if (!format) {
   process.exit(0)
 }
 
-const { glkInterface, sendFn } = CheapGlkOte(handlers)
-handlers.setSend(sendFn)
+import(`emglken/src/${format.id}.js`)
+  .then(({default: engine}) => engine)
+  .then((engine) => new engine())
+  .then((vm) => {
+    const cheapGlkOte = CheapGlkOte(handlers)
 
-const engine = require('emglken/src/' + format.engine)
-const vm = new engine()
+    handlers.setSend(cheapGlkOte.send)
 
-vm.prepare(
-  fs.readFileSync(storyfile),
-  glkInterface)
-vm.start()
+    vm.init(readFileSync(storyfile), {
+      Dialog: cheapGlkOte.Dialog,
+      GlkOte: cheapGlkOte.GlkOte,
+      Glk: {},
+      wasmBinary: readFileSync(new URL(`../node_modules/emglken/build/${format.id}-core.wasm`, import.meta.url))
+    })
+    vm.start()
+  })

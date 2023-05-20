@@ -2,14 +2,14 @@
  * @see: https://github.com/curiousdannii/glkote-term/blob/master/src/glkote-dumb.js
  */
 
-const readline = require('readline')
-const MuteStream = require('mute-stream')
-const ansiEscapes = require('ansi-escapes')
+import { createInterface, emitKeypressEvents } from 'readline'
+import MuteStream from 'mute-stream'
+import ansiEsc from 'ansi-escapes'
 
 const stdin = process.stdin
 const stdout = new MuteStream()
 stdout.pipe(process.stdout)
-const rl = readline.createInterface({
+const rl = createInterface({
   input: stdin,
   output: stdout,
   prompt: ''
@@ -29,7 +29,7 @@ const onInit = () => {
   if (stdin.isTTY) {
     stdin.setRawMode(true)
   }
-  readline.emitKeypressEvents(stdin)
+  emitKeypressEvents(stdin)
   rl.resume()
   clearScreen()
 }
@@ -71,7 +71,7 @@ const drawBuffer = messages => {
 
         if (x.style === 'input') {
           if (stdout.isTTY) {
-            stdout.write(ansiEscapes.eraseLines(2))
+            stdout.write(ansiEsc.eraseLines(2))
             stdout.write('> ')
           }
         }
@@ -120,6 +120,8 @@ const onExit = () => {
 
 const onFileNameRequest = (tosave, usage, gameid, callback) => {
   stdout.write('\n')
+  stdout.write(gameid, tosave)
+  stdout.write('\n')
   rl.question(
     'Please enter a file name: ',
     filename => callback(filename
@@ -127,10 +129,10 @@ const onFileNameRequest = (tosave, usage, gameid, callback) => {
       : null))
 }
 
-const onFileRead = (dirent, israw) =>
+const onFileRead = (dirent) =>
   void console.log('onFileRead:', dirent)
 
-const onFileWrite = (dirent, content, israw) =>
+const onFileWrite = (dirent, content) =>
   void console.log('onFileWrite:', dirent, content.length)
 
 const handle_char_input = (str, key) => {
@@ -173,13 +175,13 @@ const detach_handlers = () => {
 
 const handle_line_input = line => {
   if (stdout.isTTY) {
-    stdout.write(ansiEscapes.eraseLines(1))
+    stdout.write(ansiEsc.eraseLines(1))
   }
   send(line, currentInputType, currentWindow)
   detach_handlers()
 }
 
-module.exports.handlers = {
+export const handlers = {
   onInit,
   onUpdateWindows,
   onUpdateInputs,

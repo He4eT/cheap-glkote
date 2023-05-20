@@ -2,13 +2,14 @@
  * @see: https://github.com/curiousdannii/glkote-term/blob/master/src/glkote-dumb.js
  */
 
-const GlkOte = require('./glkOte/glkote-term')
+import GlkOte from './glkOte/glkote-term.js'
 
 class CheapGlkOte extends GlkOte {
   constructor(handlers, loggers, size) {
     super(size)
 
     this.handlers = handlers
+    this.loggers = loggers
   }
 
   sendFn (message, type, window) {
@@ -79,4 +80,4 @@ class CheapGlkOte extends GlkOte {
   }
 }
 
-module.exports = CheapGlkOte
+export default CheapGlkOte
