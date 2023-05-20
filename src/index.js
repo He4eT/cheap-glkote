@@ -1,5 +1,5 @@
-const FakeDialog = require('./fakeDialog')
-const CheapGlkOte = require('./cheapGlkOte')
+import FakeDialog from './fakeDialog.js'
+import CheapGlkOte from './cheapGlkOte.js'
 
 const noop = () => void null
 
@@ -12,39 +12,36 @@ const defaultHandlers = [
   'onFileNameRequest',
   'onFileRead',
   'onFileWrite',
-  'onExit'
+  'onExit',
 ].reduce((acc, x) => ((acc[x] = noop), acc), {})
 
 const defaultLoggers = {
   log: console.log,
   warning: console.warn,
-  error: console.error
+  error: console.error,
 }
 
 const defaultSize = {
   width: 80,
-  height: 25
+  height: 25,
 }
 
-module.exports = (handlers_, {loggers: loggers_, size: size_ } = {}) => {
+export default (handlers_, {loggers: loggers_, size: size_ } = {}) => {
   const handlers =
     Object.assign({}, defaultHandlers, handlers_)
   const loggers =
-    Object.assign({}, defaultLoggers, size_)
+    Object.assign({}, defaultLoggers, loggers_)
   const size =
     Object.assign({}, defaultSize, size_)
 
   const Dialog = new FakeDialog(handlers, loggers)
   const GlkOte = new CheapGlkOte(handlers, loggers, size)
 
-  const sendFn = GlkOte.sendFn.bind(GlkOte)
+  const send = GlkOte.sendFn.bind(GlkOte)
 
   return {
-    sendFn,
-    glkInterface: {
-      Dialog,
-      GlkOte,
-      Glk: {}
-    }
+    Dialog,
+    GlkOte,
+    send,
   }
 }
