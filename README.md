@@ -11,13 +11,13 @@ This repository includes examples of [stdio interface implementation](https://gi
 
 ### Initialization
 ```js
-const { glkInterface, sendFn } =
+const { Dialog, GlkOte, send } =
   CheapGlkOte(handlers [, { loggers, size }])
 ```
 
 ### Input
 ```js
-sendFn('open door', inputType, targetWindow)
+send('open door', inputType, targetWindow)
 ```
 You can receive `inputType` and `id` of `targetWindow` in `onUpdateInputs` handler.<br>
 You can receive `targetWindow` by its `is` in `onUpdateWindows` handler.<br>
@@ -87,7 +87,7 @@ Default loggers:
 const defaultLoggers = {
   log: console.log,
   warning: console.warn,
-  error: console.error
+  error: console.error,
 }
 ```
 
@@ -96,7 +96,7 @@ Default sizes:
 ```js
 const defaultSize = {
   width: 80,
-  height: 25
+  height: 25,
 }
 ```
 
