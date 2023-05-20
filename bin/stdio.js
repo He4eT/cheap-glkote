@@ -120,6 +120,8 @@ const onExit = () => {
 
 const onFileNameRequest = (tosave, usage, gameid, callback) => {
   stdout.write('\n')
+  stdout.write(gameid, tosave)
+  stdout.write('\n')
   rl.question(
     'Please enter a file name: ',
     filename => callback(filename
@@ -127,10 +129,10 @@ const onFileNameRequest = (tosave, usage, gameid, callback) => {
       : null))
 }
 
-const onFileRead = (dirent, israw) =>
+const onFileRead = (dirent) =>
   void console.log('onFileRead:', dirent)
 
-const onFileWrite = (dirent, content, israw) =>
+const onFileWrite = (dirent, content) =>
   void console.log('onFileWrite:', dirent, content.length)
 
 const handle_char_input = (str, key) => {
