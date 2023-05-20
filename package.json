@@ -10,16 +10,19 @@
     "interactive fiction",
     "interactive-fiction"
   ],
+  "type": "module",
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "main": "src/index.js",
   "files": [
     "/src"
   ],
   "repository": "https://github.com/He4eT/cheap-glkote",
   "bugs": "https://github.com/He4eT/cheap-glkote/issues",
-  "dependencies": {},
   "devDependencies": {
     "ansi-escapes": "^4.0.0",
-    "emglken": "^0.3.3",
+    "emglken": "^0.5.2",
     "minimist": "^1.2.5",
     "mute-stream": "0.0.8"
   },
