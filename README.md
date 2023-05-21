@@ -19,8 +19,8 @@ const { Dialog, GlkOte, send } =
 ```js
 send('open door', inputType, targetWindow)
 ```
-You can receive `inputType` and `id` of `targetWindow` in `onUpdateInputs` handler.<br>
-You can receive `targetWindow` by its `is` in `onUpdateWindows` handler.<br>
+You can obtain `inputType` and `id` of `targetWindow` inside the `onUpdateInputs` handler.<br>
+You can specify `targetWindow` by its `id` inside the `onUpdateWindows` handler.<br>
 As I know, `inputType` can be `line` or `char`.
 
 ### Output and lifecycle
